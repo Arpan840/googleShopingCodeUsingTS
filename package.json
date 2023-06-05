@@ -48,6 +48,13 @@
     "typescript": "^4.7.4"
   },
   "dependencies": {
-    "jest-cucumber": "^3.0.1"
+    "@nestjs/common": "^9.4.2",
+    "axios": "^1.4.0",
+    "dotenv": "^16.1.4",
+    "google-auth-library": "^8.8.0",
+    "googleapis": "^118.0.0",
+    "install": "^0.13.0",
+    "jest-cucumber": "^3.0.1",
+    "npm": "^9.6.7"
   }
 }
