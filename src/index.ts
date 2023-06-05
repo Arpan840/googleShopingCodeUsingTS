@@ -12,7 +12,7 @@ const authUrl = authClient.generateAuthUrl({
 });
 console.log(authUrl)
 
-const tokensPromise = authClient.getToken("4/0AbUR2VMnZ9ffNaf3jVKp9aKyMcKAqiHmRo2cLbLhq7-msNKSF-JXZO6GK9mD-fkPjNVw8g")
+const tokensPromise = authClient.getToken("4%2F0AbUR2VOEf62ACYgCZEMZTjm4fOA1G2MGiDRB-Ow8cVxLS8IRO6OyC5Ox6h5k9QRJs__png")
   .then(tokens => {
     authClient.setCredentials(tokens.tokens);
     return tokens.tokens;
@@ -28,35 +28,35 @@ tokensPromise
   .then(tokens => {
 
     console.log('Tokens:', tokens);
-   createProduct();
+    createProduct();
   })
   .catch(error => {
 
     console.error('Error handling tokens:', error);
   });
 
-  async function createProduct(){
-    try{
-      const merchantId=environment.MerchantId;
-      const productData:content_v2.Schema$Product={
-        title: 'Laptop',
-      description: 'i9 processer, 2080 gtx',     
+async function createProduct() {
+  try {
+    const merchantId = environment.MerchantId;
+    const productData: content_v2.Schema$Product = {
+      title: 'Laptop',
+      description: 'i9 processer, 2080 gtx',
       price: {
         value: '10.99',
         currency: 'USD',
       },
       availability: 'in stock',
       condition: 'new',
-      };
-      const content= google.content({version:'v2', auth:authClient})
-      const response=await content.products.insert({
-        merchantId,
-        requestBody: productData,
-      });
-      console.log('Product created:',response.data);
-    }
-    catch (error){
-      console.error('Error creating product')
-    }
+    };
+    const content = google.content({ version: 'v2', auth: authClient })
+    const response = await content.products.insert({
+      merchantId,
+      requestBody: productData,
+    });
+    console.log('Product created:', response.data);
   }
+  catch (error) {
+    console.error('Error creating product')
+  }
+}
 
