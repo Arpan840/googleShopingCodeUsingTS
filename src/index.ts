@@ -59,4 +59,17 @@ async function createProduct() {
     console.error('Error creating product')
   }
 }
+async function getAllProducts() {
+  try {
+    const merchantId = environment.MerchantId;
+    const content = google.content({ version: 'v2', auth: authClient });
+    const response = await content.products.list({
+      merchantId,
+    });
+    const products = response.data.resources || [];
+    console.log(products)
+  } catch (error) {
+    console.error(error)
+  }
+}
 
