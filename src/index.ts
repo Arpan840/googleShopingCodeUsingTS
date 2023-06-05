@@ -72,4 +72,30 @@ async function getAllProducts() {
     console.error(error)
   }
 }
+const content = google.content({
+  version: 'v2.1',
+  auth: authClient,
+});
+async function updateProduct(productId: string, productData: any) {
+  try {
+    const response = await content.products.update({
+      merchantId: 'YOUR_MERCHANT_ID',
+      productId: productId,
+      requestBody: productData,
+    });
+    console.log('Product updated:', response.data);
+  } catch (error) {
+    console.error('Error updating product:', error);
+  }
+}
+
+
+const productId = 'YOUR_PRODUCT_ID';
+const productData = {
+
+  title: 'New Title',
+  description: 'New Description',
+};
+
+updateProduct(productId, productData);
 
