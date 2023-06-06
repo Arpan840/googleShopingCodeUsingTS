@@ -1,46 +1,58 @@
-// eslint-disable-next-line no-console
-
 import { google, content_v2 } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
 import { environment } from './environment';
+import express, { query } from 'express';
 
-const authClient = new OAuth2Client(environment.Client_Id, environment.Client_secret, environment.Redirect_Uri);
+const app = express();
+const authClient = new OAuth2Client(
+  environment.Client_Id,
+  environment.Client_secret,
+  environment.Redirect_Uri
+);
 
 const authUrl = authClient.generateAuthUrl({
   access_type: 'offline',
   scope: 'https://www.googleapis.com/auth/content',
 });
-console.log(authUrl)
+console.log(authUrl);
 
-const tokensPromise = authClient.getToken("4%2F0AbUR2VOEf62ACYgCZEMZTjm4fOA1G2MGiDRB-Ow8cVxLS8IRO6OyC5Ox6h5k9QRJs__png")
-  .then(tokens => {
-    authClient.setCredentials(tokens.tokens);
-    return tokens.tokens;
-  })
-  .catch(error => {
 
+app.get('/oauth/callback', async (req, res) => {
+  
+  const code = req.query.code as string;
+    console.log(code)
+  try {
+    const { tokens } = await authClient.getToken(code);
+    authClient.setCredentials(tokens);
+
+    console.log('Access token:', tokens.access_token);
+
+    createProduct(tokens.access_token as string);
+    updateProduct('YOUR_PRODUCT_ID', {
+      title: 'New Title',
+      description: 'New Description',
+    });
+    getAllProducts(tokens.access_token as string);
+    deleteProduct('YOUR_PRODUCT_ID');
+
+    res.send('Authentication successful!');
+  } catch (error) {
     console.error('Error fetching tokens:', error);
-    throw error;
-  });
+    res.status(500).send('Authentication failed!');
+  }
+});
 
+app.listen(3000, () => {
+  console.log('Server listening on port 3000');
+});
 
-tokensPromise
-  .then(tokens => {
-
-    console.log('Tokens:', tokens);
-    createProduct();
-  })
-  .catch(error => {
-
-    console.error('Error handling tokens:', error);
-  });
-
-async function createProduct() {
+async function createProduct(accessToken: string) {
   try {
     const merchantId = environment.MerchantId;
+    console.log('merchant', merchantId);
     const productData: content_v2.Schema$Product = {
       title: 'Laptop',
-      description: 'i9 processer, 2080 gtx',
+      description: 'i9 processor, 2080 GTX',
       price: {
         value: '10.99',
         currency: 'USD',
@@ -48,54 +60,69 @@ async function createProduct() {
       availability: 'in stock',
       condition: 'new',
     };
-    const content = google.content({ version: 'v2', auth: authClient })
+
+    console.log("productDate", productData);
+    const auth = new google.auth.OAuth2();
+    console.log('auth12', auth);
+    auth.setCredentials({ access_token: accessToken });
+    const content = google.content({ version: 'v2', auth });
+    console.log('content12', content);
     const response = await content.products.insert({
       merchantId,
       requestBody: productData,
     });
     console.log('Product created:', response.data);
-  }
-  catch (error) {
-    console.error('Error creating product')
-  }
-}
-async function getAllProducts() {
-  try {
-    const merchantId = environment.MerchantId;
-    const content = google.content({ version: 'v2', auth: authClient });
-    const response = await content.products.list({
-      merchantId,
-    });
-    const products = response.data.resources || [];
-    console.log(products)
-  } catch (error) {
-    console.error(error)
+  } catch (err) {
+    
+    console.log('Error creating product:', err);
   }
 }
-const content = google.content({
-  version: 'v2.1',
-  auth: authClient,
-});
+
 async function updateProduct(productId: string, productData: any) {
   try {
+    const merchantId = environment.MerchantId;
+    const auth = new google.auth.OAuth2();
+    auth.setCredentials(authClient.credentials);
+    const content = google.content({ version: 'v2.1', auth });
     const response = await content.products.update({
-      merchantId: 'YOUR_MERCHANT_ID',
-      productId: productId,
+      merchantId,
+      productId,
       requestBody: productData,
     });
     console.log('Product updated:', response.data);
   } catch (error) {
-    console.error('Error updating product:', error);
+    //console.error('Error updating product:', error);
   }
 }
 
+async function getAllProducts(accessToken: string) {
+  try {
+    const merchantId = environment.MerchantId;
+    const auth = new google.auth.OAuth2();
+    auth.setCredentials({ access_token: accessToken });
+    const content = google.content({ version: 'v2', auth });
+    const response = await content.products.list({
+      merchantId,
+    });
+    const products = response.data.resources || [];
+    console.log('All products:', products);
+  } catch (error) {
+    //console.error('Error fetching products:', error);
+  }
+}
 
-const productId = 'YOUR_PRODUCT_ID';
-const productData = {
-
-  title: 'New Title',
-  description: 'New Description',
-};
-
-updateProduct(productId, productData);
-
+async function deleteProduct(productId: string) {
+  try {
+    const merchantId = environment.MerchantId;
+    const auth = new google.auth.OAuth2();
+    auth.setCredentials(authClient.credentials);
+    const content = google.content({ version: 'v2.1', auth });
+    const response = await content.products.delete({
+      merchantId,
+      productId,
+    });
+    console.log('Product deleted:', response.data);
+  } catch (error) {
+    //console.error('Error deleting product:', error);
+  }
+}
